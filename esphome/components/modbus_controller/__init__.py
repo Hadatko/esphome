@@ -134,6 +134,10 @@ CPP_TYPE_REGISTER_MAP = {
     "FP32_R": cg.float_,
 }
 
+ModbusLoopDoneTrigger = modbus_controller_ns.class_(
+    "ModbusLoopDoneTrigger", automation.Trigger.template()
+)
+
 ModbusCommandSentTrigger = modbus_controller_ns.class_(
     "ModbusCommandSentTrigger", automation.Trigger.template(cg.int_, cg.int_)
 )
@@ -166,6 +170,8 @@ ModbusServerRegisterSchema = cv.Schema(
     }
 )
 
+CONF_ON_LOOP_DONE = "on_loop_done"
+
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
@@ -181,6 +187,13 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(
                 CONF_SERVER_REGISTERS,
             ): cv.ensure_list(ModbusServerRegisterSchema),
+            cv.Optional(CONF_ON_LOOP_DONE): automation.validate_automation(
+                {
+                    cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(
+                        ModbusLoopDoneTrigger
+                    ),
+                }
+            ),
             cv.Optional(CONF_ON_COMMAND_SENT): automation.validate_automation(
                 {
                     cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(
@@ -361,6 +374,9 @@ async def to_code(config):
                 )
             cg.add(var.add_server_register(server_register_var))
     await register_modbus_device(var, config)
+    for conf in config.get(CONF_ON_LOOP_DONE, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        await automation.build_automation(trigger, [], conf)
     for conf in config.get(CONF_ON_COMMAND_SENT, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         await automation.build_automation(

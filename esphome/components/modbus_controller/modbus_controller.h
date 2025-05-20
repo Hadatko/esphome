@@ -500,6 +500,8 @@ class ModbusController : public PollingComponent, public modbus::ModbusDevice {
   size_t get_command_queue_length() { return command_queue_.size(); }
   /// get if the module is offline, didn't respond the last command
   bool get_module_offline() { return module_offline_; }
+  /// Set callback for loop done
+  void add_on_loop_done_callback(std::function<void()> &&callback);
   /// Set callback for commands
   void add_on_command_sent_callback(std::function<void(int, int)> &&callback);
   /// Set callback for online changes
@@ -552,6 +554,8 @@ class ModbusController : public PollingComponent, public modbus::ModbusDevice {
   uint16_t offline_skip_updates_{0};
   /// How many times we will retry a command if we get no response
   uint8_t max_cmd_retries_{4};
+  /// Loop done callback
+  CallbackManager<void()> loop_done_callback_{};
   /// Command sent callback
   CallbackManager<void(int, int)> command_sent_callback_{};
   /// Server online callback

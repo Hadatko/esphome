@@ -57,6 +57,7 @@ enum class ModbusRegisterType : uint8_t {
   DISCRETE_INPUT = 0x02,
   HOLDING = 0x03,
   READ = 0x04,
+  LAST = 0xFF,
 };
 
 // 7 MODBUS Exception Responses:

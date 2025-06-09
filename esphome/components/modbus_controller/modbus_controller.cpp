@@ -40,7 +40,7 @@ bool ModbusController::send_next_command_() {
                this->address_, command->register_address);
       this->command_queue_.pop_front();
     } else {
-      ESP_LOGV(TAG, "Sending next modbus command to device %d register 0x%02X count %d", this->address_,
+      ESP_LOGI(TAG, "Sending next modbus command to device %d register 0x%02X count %d", this->address_,
                command->register_address, command->register_count);
 
       if (command->register_type == ModbusRegisterType::LAST) {

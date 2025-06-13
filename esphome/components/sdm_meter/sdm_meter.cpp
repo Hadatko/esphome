@@ -11,6 +11,22 @@ static const uint8_t MODBUS_CMD_READ_IN_REGISTERS = 0x04;
 static const uint8_t MODBUS_REGISTER_COUNT = 80;  // 74 x 16-bit registers
 
 void SDMMeter::on_modbus_data(const std::vector<uint8_t> &data) {
+  ESP_LOGI(TAG, "READING");
+  if (data.size() < 3 * 2) {
+    ESP_LOGW(TAG, "Invalid size for SDMMeter!");
+    return;
+  }
+
+  uint32_t temp = encode_uint32(data[0], data[1], data[2], data[3]);
+  ESP_LOGI(TAG, "serial %ld", temp);
+  if (this->import_reactive_energy_sensor_ != nullptr)
+    this->import_reactive_energy_sensor_->publish_state(temp);
+  ESP_LOGI(TAG, "model %ld", data[4] << 8 + data[5]);
+  if (this->export_reactive_energy_sensor_ != nullptr)
+    this->export_reactive_energy_sensor_->publish_state(data[4] << 8 + data[5]);
+
+  return;
+
   if (data.size() < MODBUS_REGISTER_COUNT * 2) {
     ESP_LOGW(TAG, "Invalid size for SDMMeter!");
     return;
@@ -82,7 +98,10 @@ void SDMMeter::on_modbus_data(const std::vector<uint8_t> &data) {
     this->export_reactive_energy_sensor_->publish_state(export_reactive_energy);
 }
 
-void SDMMeter::update() { this->send(MODBUS_CMD_READ_IN_REGISTERS, 0, MODBUS_REGISTER_COUNT); }
+void SDMMeter::update() {
+  ESP_LOGI(TAG, "SENDING");
+  this->send(0x03, 0xfc00, 3);
+}
 void SDMMeter::dump_config() {
   ESP_LOGCONFIG(TAG, "SDM Meter:");
   ESP_LOGCONFIG(TAG, "  Address: 0x%02X", this->address_);
